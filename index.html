@@ -1,1 +1,97 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ElectroLab 开源数字电路实验室</title><style>body{font-family:system-ui,sans-serif;background:#101827;color:#e9f1ff;margin:0;padding:20px}main{max-width:850px;margin:auto}section{background:#1d2b40;border-radius:16px;padding:20px;margin:16px 0}button,select{padding:12px;margin:5px;border:0;border-radius:9px;font-size:16px}button{background:#60a5fa;color:#071425}input{width:20px;height:20px} .bits{font: bold 40px monospace;color:#7dd3fc}.muted{color:#aebed3}canvas{background:#0b1424;width:100%;border-radius:8px}label{display:inline-flex;align-items:center;gap:7px;margin:8px}</style></head><body><main><h1>⚡ ElectroLab</h1><p>开源数字电路交互实验室 · 无需安装 · 支持手机</p><section><h2>74LS161 四位同步二进制计数器</h2><p class="muted">模拟上升沿触发、低电平异步清零、低电平同步装载、双使能计数。仅功能级教学模型，不模拟传播延迟。</p><label><input type="checkbox" id="clr" checked> /CLR</label><label><input type="checkbox" id="load" checked> /LOAD</label><label><input type="checkbox" id="enp" checked> ENP</label><label><input type="checkbox" id="ent" checked> ENT</label><p>并行输入 D：<select id="data"></select></p><div class="bits" id="bits">0000</div><p id="info"></p><button id="clock">↑ 时钟上升沿</button><button id="reset">恢复默认</button><p class="muted">/CLR=0 时立即清零；/LOAD=0 时下一上升沿装载 D；两使能均为1时才计数。</p></section><section><h2>555 定时器 · 无稳态振荡器</h2><p>设置 R1、R2 和 C，观察理想近似波形。</p><label>R1 (kΩ) <input id="r1" type="number" value="10" min="0.1" step="1" style="width:75px"></label><label>R2 (kΩ) <input id="r2" type="number" value="10" min="0.1" step="1" style="width:75px"></label><label>C (μF) <input id="cap" type="number" value="10" min="0.001" step="1" style="width:75px"></label><p id="timing"></p><canvas id="wave" width="760" height="180"></canvas><p class="muted">理想近似：高电平 tH≈0.693(R1+R2)C，低电平 tL≈0.693R2C；电阻用Ω、电容用F。</p></section><section><h2>参与开源</h2><p>欢迎报告错误、补充中文教程、贡献更多数字电路模块。项目不收集个人信息。</p></section></main><script>let q=0;const $=id=>document.getElementById(id);for(let i=0;i<16;i++)$('data').add(new Option(i+' ('+i.toString(2).padStart(4,'0')+')',i));function show(){if(!$('clr').checked)q=0;$('bits').textContent=q.toString(2).padStart(4,'0');$('info').textContent='十进制：'+q+' · RCO：'+(q===15&&$('ent').checked?1:0)}$('clock').onclick=()=>{if(!$('clr').checked)q=0;else if(!$('load').checked)q=Number($('data').value);else if($('enp').checked&&$('ent').checked)q=(q+1)%16;show()};$('clr').onchange=show;$('ent').onchange=show;$('reset').onclick=()=>{q=0;for(const id of ['clr','load','enp','ent'])$(id).checked=true;$('data').value='0';show()};function wave(){let a=Number($('r1').value),b=Number($('r2').value),c=Number($('cap').value);if(a<=0||b<=0||c<=0||![a,b,c].every(Number.isFinite)){$('timing').textContent='请输入有效的正数';return}let hi=.693*(a+b)*c/1000,lo=.693*b*c/1000,T=hi+lo;$('timing').textContent=`高电平 ${hi.toFixed(3)} s · 低电平 ${lo.toFixed(3)} s · 频率 ${(1/T).toFixed(3)} Hz · 占空比 ${(100*hi/T).toFixed(1)}%`;let x=$('wave').getContext('2d');x.clearRect(0,0,760,180);x.strokeStyle='#7dd3fc';x.lineWidth=3;x.beginPath();let pos=15,yH=40,yL=130,unit=730/4; x.moveTo(pos,yL);for(let i=0;i<4;i++){x.lineTo(pos,yH);pos+=unit*hi/T;x.lineTo(pos,yH);x.lineTo(pos,yL);pos+=unit*lo/T;x.lineTo(pos,yL)}x.stroke()}for(const id of ['r1','r2','cap'])$(id).oninput=wave;show();wave();</script></body></html>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="ElectroLab：免费开源的74LS160/161计数器、555定时器和数字波形交互学习实验室。">
+<title>ElectroLab · 开源数字电路交互实验室</title>
+<style>
+:root{color-scheme:dark;--bg:#0a1120;--panel:#17243a;--panel2:#101c2f;--line:#31445e;--txt:#eaf2ff;--muted:#adc0d9;--accent:#65b4ff;--green:#68e1b0;--gold:#ffd17b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 85% -15%,#18345c 0,transparent 50%),var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.65}
+main{max-width:1060px;margin:auto;padding:22px 18px 70px}header{padding:12px 0 20px}h1{font-size:clamp(32px,5vw,46px);margin:4px 0}h2{margin:0 0 10px;font-size:24px}h3{margin:14px 0 8px;font-size:17px}p{margin:8px 0 15px}.muted,small{color:var(--muted)}.eyebrow{color:var(--green);font-weight:700;letter-spacing:.12em;font-size:12px}.intro{font-size:17px;color:#c8d9ee}
+nav{display:flex;gap:10px;flex-wrap:wrap;margin:15px 0 22px}nav a{color:var(--txt);text-decoration:none;border:1px solid var(--line);border-radius:99px;padding:7px 15px;background:#14233b}
+section{background:var(--panel);border:1px solid #293c56;border-radius:18px;padding:clamp(16px,3vw,28px);margin:18px 0;box-shadow:0 12px 40px #0002}
+.pill{display:inline-block;border:1px solid #436388;border-radius:20px;padding:2px 10px;color:#b6d8ff;font-size:12px;margin-bottom:8px}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:15px 0}label{display:inline-flex;align-items:center;gap:8px;cursor:pointer}input[type=checkbox]{accent-color:var(--accent);width:19px;height:19px}input[type=number],select{background:#0c1829;color:var(--txt);border:1px solid #4a607e;border-radius:9px;padding:10px;font:inherit;max-width:125px}
+button{background:var(--accent);color:#071524;border:0;border-radius:10px;padding:11px 17px;font:inherit;font-weight:700;cursor:pointer;min-height:44px}button.secondary{background:#304967;color:var(--txt)}button:hover{filter:brightness(1.1)}button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.tabbar{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.tab{background:#293d59;color:#d7e7fa}.tab[aria-selected=true]{background:var(--accent);color:#08192a}
+.readout{display:flex;flex-wrap:wrap;gap:16px;align-items:center;padding:14px 0}.bits{font:700 clamp(38px,7vw,60px) ui-monospace,monospace;color:#8cd6ff;letter-spacing:4px}.stat{background:var(--panel2);padding:9px 14px;border-radius:10px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px}
+svg{max-width:100%;height:auto}.chart{width:100%;display:block;background:#0c182a;border:1px solid var(--line);border-radius:12px;margin:12px 0}
+.tablewrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px}td,th{border-bottom:1px solid var(--line);padding:9px;text-align:left}th{color:#9fd1ff}code{color:#a7e9c5}.hint{border-left:3px solid var(--gold);padding:9px 12px;background:#253247;color:#e8efff;border-radius:4px}
+summary{cursor:pointer;font-weight:700}details{background:var(--panel2);border-radius:10px;padding:12px 15px;margin:10px 0}
+footer{color:var(--muted);font-size:14px;text-align:center;margin-top:24px}a{color:#8bc7ff}
+@media(max-width:600px){main{padding:12px 12px 45px}section{padding:16px}.controls{gap:13px}.readout{gap:9px}}
+</style>
+</head>
+<body><main>
+<header><div class="eyebrow">OPEN SOURCE · ELECTRONICS LEARNING</div><h1>⚡ ElectroLab</h1><p class="intro">开源数字电路交互实验室 · 在浏览器里动手学电路</p><p class="muted">74LS160 / 74LS161 · 数字时序波形 · 555 定时器三种应用</p></header>
+<nav aria-label="页面导航"><a href="#counter">计数器实验</a><a href="#timing">波形记录</a><a href="#timer">555 实验</a><a href="#learn">学习与开源</a></nav>
+<section id="counter"><span class="pill">实验 01 · 计数器</span><h2>74LS160 / 74LS161 交互仿真</h2>
+<p class="muted">切换芯片，设置控制信号，点击时钟上升沿。支持异步清零、同步置数、计数使能、终端计数输出。</p>
+<div class="tabbar" role="tablist" aria-label="计数器芯片">
+<button class="tab" id="chip160" role="tab" aria-selected="false" type="button">74LS160 · 十进制</button>
+<button class="tab" id="chip161" role="tab" aria-selected="true" type="button">74LS161 · 十六进制</button></div>
+<div class="controls"><label><input type="checkbox" id="clr" checked> /CLR（清零）</label><label><input type="checkbox" id="load" checked> /LOAD（置数）</label><label><input type="checkbox" id="enp" checked> ENP</label><label><input type="checkbox" id="ent" checked> ENT</label></div>
+<div class="controls"><label for="data">并行输入 D</label><select id="data" aria-label="并行装载数值"></select><span class="muted" id="range"></span></div>
+<div class="readout"><div class="bits" id="bits" aria-live="polite">0000</div><div class="stat" id="decimal">十进制：0</div><div class="stat" id="rco">RCO：0</div><div class="stat" id="pulse">时钟次数：0</div></div>
+<div class="controls"><button id="clock" type="button">↑ 触发一次上升沿</button><button id="reset" class="secondary" type="button">恢复默认</button><button id="clearhistory" class="secondary" type="button">清空波形记录</button></div>
+<p class="hint" id="explain" aria-live="polite">等待上升沿：两个使能均为1时计数。</p>
+<div class="grid"><div class="card"><strong>控制优先级</strong><p class="muted">/CLR=0 → 立即清零；否则在上升沿：/LOAD=0 → 装载；否则两使能=1 → 加1；其他情况 → 保持。</p></div><div class="card"><strong>两款芯片区别</strong><p class="muted">74LS160 按 0→9→0 循环；74LS161 按 0→15→0 循环。两者均是四位同步计数器。</p></div></div>
+</section>
+<section id="timing"><span class="pill">实验 02 · 时序分析</span><h2>数字电路波形记录仪</h2><p class="muted">每点击一次上升沿，记录 CP、Q0～Q3 和 RCO。低电平异步清零也会在记录中体现；横轴为操作事件，不表示真实时间。</p>
+<svg class="chart" id="logicwave" viewBox="0 0 940 320" role="img" aria-label="计数器数字波形图"></svg>
+<div class="tablewrap"><table><thead><tr><th>事件</th><th>操作</th><th>Q3 Q2 Q1 Q0</th><th>十进制</th><th>RCO</th></tr></thead><tbody id="history"></tbody></table></div>
+</section>
+<section id="timer"><span class="pill">实验 03 · 555 定时器</span><h2>555 定时器实验台</h2><div class="tabbar" role="tablist" aria-label="555 工作模式">
+<button class="tab" id="modeAstable" role="tab" aria-selected="true" type="button">无稳态振荡器</button>
+<button class="tab" id="modeMono" role="tab" aria-selected="false" type="button">单稳态触发器</button>
+<button class="tab" id="modeSchmitt" role="tab" aria-selected="false" type="button">施密特触发器</button></div>
+<div id="astable"><p class="muted">经典 555 无稳态接法，输入 R1、R2、C，计算高低电平时间、频率和占空比。</p>
+<div class="controls"><label>R1 (kΩ) <input id="r1" type="number" value="10" min=".001" step="1"></label><label>R2 (kΩ) <input id="r2" type="number" value="10" min=".001" step="1"></label><label>C (μF) <input id="cap" type="number" value="10" min=".001" step="1"></label></div>
+<p id="astableResult" aria-live="polite"></p><svg id="astableWave" class="chart" viewBox="0 0 900 210" role="img" aria-label="555无稳态输出方波"></svg><p class="muted">tH≈0.693(R1+R2)C；tL≈0.693R2C。计算时电阻换算为 Ω，电容换算为 F。该模型不考虑器件误差与非理想效应。</p></div>
+<div id="mono" hidden><p class="muted">单稳态：外部低电平触发后输出一个高电平脉冲，持续时间约为 1.1RC。</p>
+<div class="controls"><label>R (kΩ) <input id="mr" type="number" value="100" min=".001" step="1"></label><label>C (μF) <input id="mc" type="number" value="1" min=".001" step="1"></label></div>
+<p id="monoResult" aria-live="polite"></p><svg class="chart" id="monoWave" viewBox="0 0 900 210" role="img" aria-label="555单稳态触发脉冲"></svg><p class="muted">这是单次触发的理想示意；实际触发脉宽、复位条件及元件公差会影响输出。</p></div>
+<div id="schmitt" hidden><p class="muted">555 施密特触发器：同一信号接到 TRIG 和 THRES，输入超过 2/3 VCC 时输出低电平；输入低于 1/3 VCC 时输出高电平；中间区域保持先前状态。</p>
+<div class="controls"><label>电源 VCC (V) <input id="vcc" type="number" value="5" min=".1" step=".5"></label><label>输入电压 Vin (V) <input id="vin" type="number" value="2.5" min="0" step=".1"></label></div>
+<div class="controls"><button id="applyVin" type="button">应用输入电压</button><button id="schmittReset" class="secondary" type="button">输出初始化为低电平</button></div><p id="schmittResult" aria-live="polite"></p><svg class="chart" id="schmittWave" viewBox="0 0 900 210" role="img" aria-label="施密特阈值示意图"></svg></div>
+</section>
+<section id="learn"><span class="pill">实验手册</span><h2>动手试一试</h2>
+<details><summary>练习 1：74LS161 怎样从 0000 数到 0011？</summary><p>选择 74LS161，确保 /CLR、/LOAD、ENP、ENT 全部勾选，连续点击上升沿三次，观察 0001、0010、0011 及 Q0～Q3 波形。</p></details>
+<details><summary>练习 2：74LS160 为什么不会出现 1010？</summary><p>74LS160 是十进制计数器：正常计数只在 0000～1001 之间循环。从 1001 再来一个上升沿回到 0000。注意：并行置数可能装入非BCD状态，本教学模型将这些状态的后续计数标记为简化处理。</p></details>
+<details><summary>练习 3：555 单稳态如何得到约 0.2 秒脉冲？</summary><p>取 C=0.47 μF，根据 t≈1.1RC，R≈0.2/(1.1×0.47×10⁻⁶)≈387 kΩ。可以输入 R=387 kΩ、C=0.47 μF 检验。</p></details>
+<p>项目开源：<a href="https://github.com/yuyu0612yuyu/ElectroLab" target="_blank" rel="noopener noreferrer">GitHub 仓库</a> · <a href="https://github.com/yuyu0612yuyu/ElectroLab/issues" target="_blank" rel="noopener noreferrer">反馈问题 / 提建议</a></p>
+<p class="muted">免责声明：本项目是功能级教学仿真，不代替真实电路测量，不模拟传播延迟、模拟噪声、器件容差或全部边界条件。</p></section>
+<footer>ElectroLab · 免费开源 · 浏览器本地运行，不需要账号 · MIT License</footer>
+</main>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+let chip=161,q=0,pulses=0,events=[],mode="astable",schmittOut=0;
+const binary=n=>n.toString(2).padStart(4,"0");
+const terminal=()=>chip===160?9:15;
+const rco=()=>Number(q===terminal()&&$("ent").checked);
+function populate(){const d=$("data"),old=Number(d.value)||0;d.innerHTML="";for(let i=0;i<16;i++)d.add(new Option(`${i} (${binary(i)})`,String(i)));d.value=String(old);$("range").textContent=chip===160?"正常计数范围：0～9（置数支持0～15）":"计数范围：0～15"}
+function record(label){events.push({label,q,rco:rco(),pulse:pulses});if(events.length>20)events.shift();drawHistory()}
+function render(reason){$("bits").textContent=binary(q);$("decimal").textContent="十进制："+q;$("rco").textContent="RCO："+rco();$("pulse").textContent="时钟次数："+pulses;if(reason)$("explain").textContent=reason;drawHistory()}
+function clock(){pulses++;let reason;if(!$("clr").checked){q=0;reason="异步清零有效：输出保持 0000。"}else if(!$("load").checked){q=Number($("data").value);reason="同步置数：本次上升沿将并行输入 D 装入计数器。"}else if($("enp").checked&&$("ent").checked){if(chip===160&&q>9){q=0;reason="74LS160：从非BCD置数状态恢复到 0000（教学简化处理）。"}else{q=(q+1)%(terminal()+1);reason="计数使能有效：上升沿使计数值加1。"}}else reason="计数使能未同时有效：保持原状态。";record("↑ CP");render(reason)}
+function clear(){q=0;pulses=0;events=[];for(const id of ["clr","load","enp","ent"])$(id).checked=true;$("data").value="0";record("初始");render("已恢复默认：等待时钟上升沿。")}
+function setChip(n){chip=n;$("chip160").setAttribute("aria-selected",String(n===160));$("chip161").setAttribute("aria-selected",String(n===161));populate();clear()}
+$("chip160").onclick=()=>setChip(160);$("chip161").onclick=()=>setChip(161);$("clock").onclick=clock;$("reset").onclick=clear;$("clearhistory").onclick=()=>{events=[];record("当前");render("波形记录已清空，重新开始记录。")};
+$("clr").onchange=()=>{if(!$("clr").checked){q=0;record("CLR↓");render("异步清零：不需要等待时钟，立即清零。")}else{record("CLR↑");render("清零解除，等待下一次时钟上升沿。")}};
+$("ent").onchange=()=>{record("ENT变化");render("ENT 变化可能影响 RCO，但不立即改变计数值。")};
+function drawHistory(){const tb=$("history");tb.innerHTML="";events.slice().reverse().forEach((e,i)=>{const tr=document.createElement("tr");[String(events.length-i),e.label,binary(e.q),String(e.q),String(e.rco)].forEach(s=>{let td=document.createElement("td");td.textContent=s;tr.append(td)});tb.append(tr)});drawLogic()}
+function drawLogic(){const svg=$("logicwave");const ns="http://www.w3.org/2000/svg";svg.replaceChildren();const add=(tag,attrs,txt)=>{const el=document.createElementNS(ns,tag);Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));if(txt!==undefined)el.textContent=txt;svg.append(el);return el};
+const rows=[["CP",null],["Q0",0],["Q1",1],["Q2",2],["Q3",3],["RCO",4]];const left=78,step=events.length?Math.min(70,810/events.length):60;
+rows.forEach(([name,bit],ri)=>{let y=33+ri*48;add("text",{x:12,y:y+15,fill:"#b6d4f6","font-size":16},name);add("line",{x1:left,y1:y+22,x2:920,y2:y+22,stroke:"#2a3b52","stroke-dasharray":"3 5"});if(!events.length)return;let d="",previous=0;events.forEach((e,i)=>{const x=left+i*step;const val=bit===null?(e.label==="↑ CP"?1:0):bit===4?e.rco:(e.q>>bit)&1;const high=y,low=y+24;if(i===0)d=`M${x} ${val?high:low}`;else d+=` H${x} V${val?high:low}`;d+=` H${x+step*.48}`;if(bit===null&&val)d+=` V${low} H${x+step*.95}`;previous=val});add("path",{d,fill:"none",stroke:bit===null?"#ffd17b":bit===4?"#68e1b0":"#7ecbff","stroke-width":2.5,"stroke-linejoin":"round"});});
+add("text",{x:80,y:310,fill:"#a8bcd5","font-size":13},"横轴：操作事件（非真实时间） · 最近20条记录")}
+
+function svgShape(id,lines){$(id).innerHTML=lines}
+function numeric(ids){const vals=ids.map(id=>Number($(id).value));return vals.every(v=>Number.isFinite(v)&&v>0)?vals:null}
+function astable(){const v=numeric(["r1","r2","cap"]);if(!v){$("astableResult").textContent="请输入大于0的有效 R1、R2、C。";$("astableWave").innerHTML="";return}const [a,b,c]=v,hi=.000693*(a+b)*c,lo=.000693*b*c,T=hi+lo,duty=hi/T;$("astableResult").textContent=`高电平 ${hi.toFixed(4)} s · 低电平 ${lo.toFixed(4)} s · 频率 ${(1/T).toFixed(3)} Hz · 占空比 ${(duty*100).toFixed(1)}%`;let x=40,shape=`M${x} 155`;for(let i=0;i<4;i++){shape+=` V60 H${x+200*duty} V155 H${x+200}`;x+=200}svgShape("astableWave",`<line x1="35" y1="155" x2="860" y2="155" stroke="#56708d"/><path d="${shape}" fill="none" stroke="#79d4ff" stroke-width="4"/><text x="40" y="32" fill="#b7cbe4">输出电压 · 4个周期（示意）</text><text x="40" y="192" fill="#b7cbe4">时间 →</text>`)}
+function mono(){const v=numeric(["mr","mc"]);if(!v){$("monoResult").textContent="请输入有效的正数 R 和 C。";return}const t=.0011*v[0]*v[1];$("monoResult").textContent=`理想输出脉宽 t≈1.1RC≈${t.toFixed(4)} s`;svgShape("monoWave",`<path d="M45 155 H160 V60 H610 V155 H850" fill="none" stroke="#79d4ff" stroke-width="4"/><path d="M160 180 V38" stroke="#ffd17b" stroke-dasharray="6 5"/><text x="170" y="35" fill="#ffd17b">触发</text><text x="355" y="48" fill="#b7cbe4">脉宽 ≈ ${t.toFixed(4)} s（示意）</text><text x="45" y="195" fill="#b7cbe4">时间 →</text>`)}
+function schmitt(){const vcc=Number($("vcc").value),vin=Number($("vin").value);if(!Number.isFinite(vcc)||vcc<=0||!Number.isFinite(vin)||vin<0){$("schmittResult").textContent="请输入有效的 VCC（大于0）和 Vin（不小于0）。";return}const low=vcc/3,high=2*vcc/3;let status;if(vin<low){schmittOut=1;status="低于下阈值，输出置高"}else if(vin>high){schmittOut=0;status="高于上阈值，输出置低"}else status="位于滞回区，保持原输出";$("schmittResult").textContent=`下阈值 ${low.toFixed(3)} V · 上阈值 ${high.toFixed(3)} V · ${status} · 输出：${schmittOut?"高":"低"}`;const clamp=n=>Math.min(830,Math.max(65,n));const scale=760/Math.max(vcc,vin,0.1),lx=clamp(65+low*scale),hx=clamp(65+high*scale),vx=clamp(65+vin*scale);svgShape("schmittWave",`<rect x="${lx}" y="40" width="${Math.max(0,hx-lx)}" height="120" fill="#284663"/><line x1="${lx}" y1="38" x2="${lx}" y2="165" stroke="#68e1b0" stroke-dasharray="5 5"/><line x1="${hx}" y1="38" x2="${hx}" y2="165" stroke="#ffd17b" stroke-dasharray="5 5"/><line x1="${vx}" y1="38" x2="${vx}" y2="165" stroke="#ff849d" stroke-width="4"/><text x="50" y="22" fill="#b7cbe4">Vin 阈值区间（示意）</text><text x="${lx}" y="186" fill="#68e1b0" text-anchor="middle" font-size="13">1/3 VCC</text><text x="${hx}" y="202" fill="#ffd17b" text-anchor="middle" font-size="13">2/3 VCC</text><text x="${vx}" y="33" fill="#ff9aaa" text-anchor="middle" font-size="13">Vin</text>`)}
+function setMode(m){mode=m;for(const [id,key] of [["modeAstable","astable"],["modeMono","mono"],["modeSchmitt","schmitt"]]){$(id).setAttribute("aria-selected",String(key===m));$(key).hidden=key!==m}if(m==="astable")astable();if(m==="mono")mono();if(m==="schmitt")schmitt()}
+$("modeAstable").onclick=()=>setMode("astable");$("modeMono").onclick=()=>setMode("mono");$("modeSchmitt").onclick=()=>setMode("schmitt");
+["r1","r2","cap"].forEach(id=>$(id).oninput=astable);["mr","mc"].forEach(id=>$(id).oninput=mono);$("applyVin").onclick=schmitt;$("schmittReset").onclick=()=>{schmittOut=0;schmitt()};$("vcc").onchange=schmitt;
+populate();clear();setMode("astable");
+</script></body></html>
